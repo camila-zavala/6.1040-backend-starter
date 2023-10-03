@@ -1,9 +1,11 @@
 import { ObjectId } from "mongodb";
 
-import { Router, getExpressRouter } from "./framework/router";
+import { getExpressRouter, Router } from "./framework/router";
 
 import { Friend, Post, User, WebSession } from "./app";
 import { PostDoc, PostOptions } from "./concepts/post";
+import { ProfileDoc } from "./concepts/profile";
+import { ReactionDoc } from "./concepts/reaction";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
 import Responses from "./responses";
@@ -135,6 +137,84 @@ class Routes {
     const user = WebSession.getUser(session);
     const fromId = (await User.getUserByUsername(from))._id;
     return await Friend.rejectRequest(fromId, user);
+  }
+
+  @Router.post("/user/directMessage")
+  async sendMessage(to: UserDoc, from: UserDoc, message: string) {
+    throw new Error("not implemented yet");
+  }
+  @Router.put("directMessage/user/update")
+  async editMessage(user: UserDoc, message: string, new_message: string) {
+    throw new Error("not implemented yet");
+  }
+  @Router.delete("directMessage/user/:message")
+  async deleteMessage(user: UserDoc, message: string) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("/directMessage/user/:reaction")
+  async reactMessage(user: UserDoc, reaction: ReactionDoc, message: string) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("reaction/user/:media")
+  async makeReaction(media: PostDoc, reaction: ReactionDoc, user: UserDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.delete("reaction/user/:media")
+  async deleteReaction(media: PostDoc, user: UserDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("reaction/user/:notify")
+  async notifyReaction(from: UserDoc, to: UserDoc, reaction: ReactionDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.get("reaction/user/:media/all")
+  async searchReactions(user: UserDoc, media: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("comment/user/:media")
+  async postComment(user: UserDoc, media: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.delete("comment/user/:media")
+  async deleteComment(user: UserDoc, media: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("comment/user/:notify")
+  async notifyUser(to: UserDoc, from: UserDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("freindliness/user/:rate")
+  async rateUser(to: UserDoc, from: UserDoc, rate: string) {
+    throw new Error("not implemented yet");
+  }
+  @Router.put("friendliness/user/: overallscore")
+  async updateOverallScore(user: UserDoc, scores: UserDoc) {
+    throw new Error("not implemented yet");
+  }
+
+  @Router.post("profile/user/_id")
+  async createProfile(user: UserDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.put("profile/user/:edit")
+  async editProfile(user: UserDoc, profile: ProfileDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.post("spotdiscovery/user/:media")
+  async spotdiscoverypost(user: UserDoc, spot: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.put("spotdiscovery/user/:media")
+  async updatesdpost(user: UserDoc, spot: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.delete("spotdiscovery/user/:delmedia")
+  async deletespot(user: UserDoc, spot: PostDoc) {
+    throw new Error("not implemented yet");
+  }
+  @Router.get("spotdiscovery/user/: getReviews")
+  async getReviews(spot: string) {
+    throw new Error("not implemented yet");
   }
 }
 
