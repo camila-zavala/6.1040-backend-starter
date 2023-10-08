@@ -42,7 +42,15 @@ export default class DirectMessageConcept {
     await this.allMessages.deleteOne(message_id);
   }
 
-  async react(author: ObjectId, user: ObjectId, message_id: ObjectId) {}
+  async react(author: ObjectId, user: ObjectId, message_id: ObjectId) {
+    const message = await this.allMessages.readOne({ message_id });
+    if (message !== undefined) {
+      let react = message?.reaction;
+      if (react !== undefined) {
+        react = new ReactionConcept();
+      }
+    }
+  }
 }
 
 export class MessageAuthorNotMatchError extends NotAllowedError {
