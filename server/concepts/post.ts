@@ -63,7 +63,6 @@ export default class PostConcept {
     }
   }
 }
-
 export class PostAuthorNotMatchError extends NotAllowedError {
   constructor(
     public readonly author: ObjectId,
