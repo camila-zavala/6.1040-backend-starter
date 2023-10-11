@@ -5,6 +5,8 @@ import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 export interface UserDoc extends BaseDoc {
   username: string;
   password: string;
+  rating: number; 
+  numRatings: number; 
 }
 
 export default class UserConcept {
@@ -12,7 +14,9 @@ export default class UserConcept {
 
   async create(username: string, password: string) {
     await this.canCreate(username, password);
-    const _id = await this.users.createOne({ username, password });
+    const rating = 100; 
+    const numRatings = 1; 
+    const _id = await this.users.createOne({ username, password, rating, numRatings });
     return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
   }
 
@@ -91,6 +95,27 @@ export default class UserConcept {
   private async isUsernameUnique(username: string) {
     if (await this.users.readOne({ username })) {
       throw new NotAllowedError(`User with username ${username} already exists!`);
+    }
+  }
+  async rateUser(user: ObjectId, rate: number){
+    const maybeUser = await this.users.readOne({ObjectId}); 
+    if (maybeUser === null){
+      throw new NotFoundError(`User not found!`);
+    }
+    else{
+      const newTotal = maybeUser.numRatings + 1
+      const newRating =((maybeUser.numRatings* maybeUser.rating) + rate)//newTotal
+      maybeUser.numRatings = newTotal; 
+      maybeUser.rating = newRating;
+    }
+  }
+  async getRating(user: ObjectId){
+    const maybeUser = await this.users.readOne({ObjectId}); 
+    if (maybeUser === null){
+      throw new NotFoundError(`User not found!`);
+    }
+    else{
+      return maybeUser.rating;
     }
   }
 }
