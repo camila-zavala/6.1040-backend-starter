@@ -14,18 +14,18 @@ export interface ReactionDoc extends BaseDoc {
 export default class ReactionConcept {
   private allReactions = new DocCollection<ReactionDoc>("Reactions");
 
-  async createReaction(author: ObjectId, media: ObjectId, reaction: string) {
-    const messgae_id = await this.allReactions.createOne({ author, media, reaction });
+  async createReaction(author: ObjectId, id: ObjectId, reaction: string) {
+    const messgae_id = await this.allReactions.createOne({ author, media: id, reaction });
     return "reaction made successfully";
   }
-  async getReactionsForPost(media: ObjectId) {
-    const reactions = await this.allReactions.readMany({ media });
+  async getReactionsForPost(id: ObjectId) {
+    const reactions = await this.allReactions.readMany({ media: id });
     return reactions;
   }
 
-  async removeReaction(user: ObjectId, reaction_id: ObjectId) {
-    this.isAuthor(user, reaction_id);
-    await this.allReactions.deleteOne({ reaction_id });
+  async removeReaction(user: ObjectId, id: ObjectId) {
+    this.isAuthor(user, id);
+    await this.allReactions.deleteOne({ id });
     return "Reaction deleted successfully";
   }
 

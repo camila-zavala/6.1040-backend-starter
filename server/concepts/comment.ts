@@ -49,6 +49,10 @@ export default class CommentConcept {
       throw new CommentAuthorNotMatchError(user, _id);
     }
   }
+  async getComments(id: ObjectId) {
+    const comments = await this.comments.readMany({ media: id });
+    return comments;
+  }
 }
 export class CommentAuthorNotMatchError extends NotAllowedError {
   constructor(

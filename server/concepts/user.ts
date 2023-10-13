@@ -102,24 +102,22 @@ export default class UserConcept {
     const maybeUser = await this.users.readOne({ user });
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
-    } else {
-      const newTotal = maybeUser.numRatings + 1;
-      const newRating = maybeUser.numRatings * maybeUser.rating + rate; //newTotal
-      maybeUser.numRatings = newTotal;
-      maybeUser.rating = newRating;
     }
+    const newTotal = maybeUser.numRatings + 1;
+    const newRating = maybeUser.numRatings * maybeUser.rating + rate; //newTotal
+    maybeUser.numRatings = newTotal;
+    maybeUser.rating = newRating;
   }
   async getRating(user: ObjectId) {
     const maybeUser = await this.users.readOne({ user });
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
-    } else {
-      return maybeUser.rating;
     }
+    return maybeUser.rating;
   }
   private sanitizeUpdate(update: Partial<UserDoc>) {
     // Make sure the update cannot change the author.
-    const allowedUpdates = ["password"];
+    const allowedUpdates = ["password", "username"];
     for (const key in update) {
       if (!allowedUpdates.includes(key)) {
         throw new NotAllowedError(`Cannot update '${key}' field!`);

@@ -111,7 +111,7 @@ const operations: operation[] = [
     name: "Create Comment",
     endpoint: "/api/comment",
     method: "POST",
-    fields: { comment: "input", id: "input" },
+    fields: { username: "input", comment: "input", id: "input" },
   },
   {
     name: "Delete Comment",
@@ -120,22 +120,28 @@ const operations: operation[] = [
     fields: { id: "input" },
   },
   {
+    name: "Get Post Comments",
+    endpoint: "/api/comments",
+    method: "GET",
+    fields: { id: "input" },
+  },
+  {
     name: "Create Reaction",
     endpoint: "/api/reaction",
     method: "POST",
-    fields: { media: "input", reaction: "input" },
+    fields: { id: "input", reaction: "input" },
   },
   {
     name: "Delete Reaction",
     endpoint: "/api/reaction/delete/:id",
-    method: "POST",
+    method: "DELETE",
     fields: { id: "input" },
   },
   {
     name: "Get Post Reactions",
     endpoint: "/api/reaction/:id",
-    method: "POST",
-    fields: { media: "input" },
+    method: "GET",
+    fields: { id: "input" },
   },
   {
     name: "Create Profile",
@@ -148,6 +154,12 @@ const operations: operation[] = [
     endpoint: "/api/profile/:edit",
     method: "PUT",
     fields: { profile: "input", update: { name: "input", biography: "input", profilePicture: "input" } },
+  },
+  {
+    name: "Get Profile",
+    endpoint: "/api/profile",
+    method: "GET",
+    fields: { name: "input" },
   },
   {
     name: "Create Spot",

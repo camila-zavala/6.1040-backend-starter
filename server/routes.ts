@@ -77,7 +77,7 @@ class Routes {
   @Router.post("/posts")
   async createPost(session: WebSessionDoc, content: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
-    const created = await Post.create(user, content, [], options);
+    const created = await Post.create(user, content, options);
     return { msg: created.msg, post: await Responses.post(created.post) };
   }
 
@@ -164,28 +164,28 @@ class Routes {
   }
 
   @Router.post("/reaction")
-  async createReaction(session: WebSessionDoc, media: ObjectId, reaction: string) {
+  async createReaction(session: WebSessionDoc, id: ObjectId, reaction: string) {
     const user = WebSession.getUser(session);
-    await Reaction.createReaction(user, media, reaction);
+    return await Reaction.createReaction(user, id, reaction);
   }
   @Router.delete("/reaction/delete/:id")
   async deleteReaction(session: WebSessionDoc, id: ObjectId) {
     const user = WebSession.getUser(session);
-    await Reaction.removeReaction(user, id);
+    return await Reaction.removeReaction(user, id);
   }
   @Router.post("/reaction/user/:notify")
   async notifyReaction(from: UserDoc, to: UserDoc, reaction: ReactionDoc) {
     throw new Error("not implemented yet");
   }
   @Router.get("/reaction/:id")
-  async getReactions(media: ObjectId) {
-    await Reaction.getReactionsForPost(media);
+  async getReactions(id: ObjectId) {
+    return await Reaction.getReactionsForPost(id);
   }
 
   @Router.post("/comment")
-  async createComment(session: WebSessionDoc, comment: string, media: ObjectId) {
+  async createComment(session: WebSessionDoc, username: string, comment: string, id: ObjectId) {
     const user = WebSession.getUser(session);
-    return await Comment.createComment(user, comment, media);
+    return await Comment.createComment(user, comment, id);
   }
 
   @Router.delete("/comment/:id")
@@ -197,57 +197,65 @@ class Routes {
   async notifyUser(to: UserDoc, from: UserDoc) {
     throw new Error("not implemented yet");
   }
+  @Router.get("/comments")
+  async getComments(id: ObjectId) {
+    return Comment.getComments(id);
+  }
   @Router.post("/user/:rate")
   async rateUser(username: string, rate: number) {
-    const user_to_rate = (await User.getUserByUsername(username))._id;
-    await User.rateUser(user_to_rate, rate);
+    const user = (await User.getUserByUsername(username))._id;
+    return await User.rateUser(user, rate);
   }
   @Router.get("/user/:rating")
   async updateRating(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
-    await User.getRating(user);
+    return await User.getRating(user);
   }
 
-  @Router.post("/profile/")
-  async createProfile(session: WebSessionDoc, name: string, biography: string) {
+  @Router.post("/profile")
+  async createProfile(session: WebSessionDoc, name: string, biography: string, picture: string) {
     const user = WebSession.getUser(session);
-    await Profile.createProfile(user, name, biography, "", []);
+    return await Profile.createProfile(user, name, biography, picture, []);
   }
 
   @Router.put("/profile/:edit")
   async editProfile(session: WebSessionDoc, profile: string, update: Partial<ProfileDoc>) {
     const user = WebSession.getUser(session);
     const profile_id = (await Profile.getProfile(profile))._id;
-    await Profile.updateProfile(profile_id, update);
+    return await Profile.updateProfile(profile_id, update);
+  }
+  @Router.get("/profile")
+  async getProfile(name: string) {
+    return await Profile.getProfile(name);
   }
 
   @Router.post("/spotdiscovery")
   async createSpot(session: WebSessionDoc, name: string, photos: Array<string>, reviews: Array<ReviewsDocs>) {
     const user = WebSession.getUser(session);
-    await SpotDiscovery.createSpot(user, name, photos, reviews);
+    return await SpotDiscovery.createSpot(user, name, photos, reviews);
   }
   @Router.put("/spotdiscovery/:id")
   async addImage(session: WebSessionDoc, location: string, update: Partial<LocationsDoc>) {
     const user = WebSession.getUser(session);
     const location_id = (await SpotDiscovery.getLocation(location))._id;
-    await SpotDiscovery.addImage(location_id, user, update);
+    return await SpotDiscovery.addImage(location_id, user, update);
   }
   @Router.put("/spotdiscovery/:id")
   async updateReview(session: WebSessionDoc, id: ObjectId, update: Partial<ReviewsDocs>) {
     const user = WebSession.getUser(session);
-    await SpotDiscovery.updateReview(user, id, update);
+    return await SpotDiscovery.updateReview(user, id, update);
   }
 
   @Router.delete("/spotdiscovery/delete/:id")
   async deleteReview(session: WebSessionDoc, id: ObjectId) {
     const user = WebSession.getUser(session);
-    await SpotDiscovery.deleteReview(user, id);
+    return await SpotDiscovery.deleteReview(user, id);
   }
 
   @Router.get("/spotdiscovery/location/: getReviews")
   async getReviews(location: string) {
     const location_id = (await SpotDiscovery.getLocation(location))._id;
-    await SpotDiscovery.getReviews(location_id);
+    return await SpotDiscovery.getReviews(location_id);
   }
 }
 

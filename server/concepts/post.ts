@@ -1,7 +1,6 @@
 import { Filter, ObjectId } from "mongodb";
 
 import DocCollection, { BaseDoc } from "../framework/doc";
-import { CommentDoc } from "./comment";
 import { NotAllowedError, NotFoundError } from "./errors";
 
 export interface PostOptions {
@@ -12,14 +11,13 @@ export interface PostDoc extends BaseDoc {
   author: ObjectId;
   content: string;
   options?: PostOptions;
-  comments: Array<CommentDoc>;
 }
 
 export default class PostConcept {
   public readonly posts = new DocCollection<PostDoc>("posts");
 
-  async create(author: ObjectId, content: string, comments: Array<CommentDoc>, options?: PostOptions) {
-    const _id = await this.posts.createOne({ author, content, options, comments });
+  async create(author: ObjectId, content: string, options?: PostOptions) {
+    const _id = await this.posts.createOne({ author, content, options });
     return { msg: "Post successfully created!", post: await this.posts.readOne({ _id }) };
   }
 
