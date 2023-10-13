@@ -5,20 +5,34 @@ import { PostDoc } from "./post";
 
 export interface CommentDoc extends BaseDoc {
   author: ObjectId;
-  content: string;
-  media: PostDoc;
+  comment: string;
+  media: ObjectId;
 }
 
 export default class CommentConcept {
   private comments = new DocCollection<CommentDoc>("comments");
 
-  async createComment(author: ObjectId, content: string, media: PostDoc) {
-    await this.comments.createOne({ author, content, media });
-    return "Comment made succesfully";
+  private sanitizeComment(comment: CommentDoc) {
+    // eslint-disable-next-line
+    const { author, media, ...rest } = comment; // remove password
+    return rest;
   }
-  async deleteComment(author: ObjectId, comment_id: ObjectId) {
-    await this.isAuthor(author, comment_id);
-    await this.comments.deleteOne({ comment_id });
+
+  async getComment(comment: string) {
+    const commented = await this.comments.readOne({ comment });
+    if (commented === null) {
+      throw new NotFoundError(`Comment not found!`);
+    }
+    return this.sanitizeComment(commented);
+  }
+
+  async createComment(author: ObjectId, comment: string, id: ObjectId) {
+    const comment_id = await this.comments.createOne({ author, comment, media: id });
+    return { msg: "Comment made succesfully", mediaId: id, commentId: comment_id, authorId: author };
+  }
+  async deleteComment(author: ObjectId, _id: ObjectId) {
+    await this.isAuthor(author, _id);
+    await this.comments.deleteOne({ _id });
     return "Comment deleted successfully";
   }
 
@@ -26,13 +40,13 @@ export default class CommentConcept {
     throw new Error("not implemented yet");
   }
 
-  async isAuthor(user: ObjectId, comment_id: ObjectId) {
-    const comment = await this.comments.readOne({ comment_id });
+  async isAuthor(user: ObjectId, _id: ObjectId) {
+    const comment = await this.comments.readOne({ _id });
     if (!comment) {
-      throw new NotFoundError(`Post ${comment_id} does not exist!`);
+      throw new NotFoundError(`Post ${_id} does not exist!`);
     }
     if (comment.author.toString() !== user.toString()) {
-      throw new CommentAuthorNotMatchError(user, comment_id);
+      throw new CommentAuthorNotMatchError(user, _id);
     }
   }
 }

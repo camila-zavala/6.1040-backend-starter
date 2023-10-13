@@ -5,8 +5,8 @@ import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 export interface UserDoc extends BaseDoc {
   username: string;
   password: string;
-  rating: number; 
-  numRatings: number; 
+  rating: number;
+  numRatings: number;
 }
 
 export default class UserConcept {
@@ -14,8 +14,8 @@ export default class UserConcept {
 
   async create(username: string, password: string) {
     await this.canCreate(username, password);
-    const rating = 100; 
-    const numRatings = 1; 
+    const rating = 100;
+    const numRatings = 1;
     const _id = await this.users.createOne({ username, password, rating, numRatings });
     return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
   }
@@ -69,6 +69,7 @@ export default class UserConcept {
     if (update.username !== undefined) {
       await this.isUsernameUnique(update.username);
     }
+    this.sanitizeUpdate(update);
     await this.users.updateOne({ _id }, update);
     return { msg: "User updated successfully!" };
   }
@@ -97,25 +98,32 @@ export default class UserConcept {
       throw new NotAllowedError(`User with username ${username} already exists!`);
     }
   }
-  async rateUser(user: ObjectId, rate: number){
-    const maybeUser = await this.users.readOne({ObjectId}); 
-    if (maybeUser === null){
+  async rateUser(user: ObjectId, rate: number) {
+    const maybeUser = await this.users.readOne({ user });
+    if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
-    }
-    else{
-      const newTotal = maybeUser.numRatings + 1
-      const newRating =((maybeUser.numRatings* maybeUser.rating) + rate)//newTotal
-      maybeUser.numRatings = newTotal; 
+    } else {
+      const newTotal = maybeUser.numRatings + 1;
+      const newRating = maybeUser.numRatings * maybeUser.rating + rate; //newTotal
+      maybeUser.numRatings = newTotal;
       maybeUser.rating = newRating;
     }
   }
-  async getRating(user: ObjectId){
-    const maybeUser = await this.users.readOne({ObjectId}); 
-    if (maybeUser === null){
+  async getRating(user: ObjectId) {
+    const maybeUser = await this.users.readOne({ user });
+    if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
-    }
-    else{
+    } else {
       return maybeUser.rating;
+    }
+  }
+  private sanitizeUpdate(update: Partial<UserDoc>) {
+    // Make sure the update cannot change the author.
+    const allowedUpdates = ["password"];
+    for (const key in update) {
+      if (!allowedUpdates.includes(key)) {
+        throw new NotAllowedError(`Cannot update '${key}' field!`);
+      }
     }
   }
 }

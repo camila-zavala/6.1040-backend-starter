@@ -1,6 +1,7 @@
 import { Filter, ObjectId } from "mongodb";
 
 import DocCollection, { BaseDoc } from "../framework/doc";
+import { CommentDoc } from "./comment";
 import { NotAllowedError, NotFoundError } from "./errors";
 
 export interface PostOptions {
@@ -11,13 +12,14 @@ export interface PostDoc extends BaseDoc {
   author: ObjectId;
   content: string;
   options?: PostOptions;
+  comments: Array<CommentDoc>;
 }
 
 export default class PostConcept {
   public readonly posts = new DocCollection<PostDoc>("posts");
 
-  async create(author: ObjectId, content: string, options?: PostOptions) {
-    const _id = await this.posts.createOne({ author, content, options });
+  async create(author: ObjectId, content: string, comments: Array<CommentDoc>, options?: PostOptions) {
+    const _id = await this.posts.createOne({ author, content, options, comments });
     return { msg: "Post successfully created!", post: await this.posts.readOne({ _id }) };
   }
 
@@ -26,6 +28,20 @@ export default class PostConcept {
       sort: { dateUpdated: -1 },
     });
     return posts;
+  }
+
+  private sanitizePost(post: PostDoc) {
+    // eslint-disable-next-line
+    const { author, content, options, ...rest } = post; // remove password
+    return rest;
+  }
+
+  async getAllComments(id: ObjectId) {
+    const post = await this.posts.readOne({ id });
+    if (post === null) {
+      throw new NotFoundError(`User not found!`);
+    }
+    return this.sanitizePost(post);
   }
 
   async getByAuthor(author: ObjectId) {

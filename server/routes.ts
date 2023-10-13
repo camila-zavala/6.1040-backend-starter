@@ -2,10 +2,11 @@ import { ObjectId } from "mongodb";
 
 import { getExpressRouter, Router } from "./framework/router";
 
-import { Friend, Post, User, WebSession } from "./app";
+import { Comment, DirectMessage, Friend, Post, Profile, Reaction, SpotDiscovery, User, WebSession } from "./app";
 import { PostDoc, PostOptions } from "./concepts/post";
 import { ProfileDoc } from "./concepts/profile";
-import { ReactionDoc } from "./concepts/reaction";
+import ReactionConcept, { ReactionDoc } from "./concepts/reaction";
+import { LocationsDoc, ReviewsDocs } from "./concepts/spotdiscovery";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
 import Responses from "./responses";
@@ -40,9 +41,11 @@ class Routes {
   }
 
   @Router.delete("/users")
-  async deleteUser(session: WebSessionDoc) {
+  async deleteUser(session: WebSessionDoc, name: string) {
     const user = WebSession.getUser(session);
     WebSession.end(session);
+    const profile_id = (await Profile.getProfile(name))._id;
+    await Profile.deleteProfile(profile_id);
     return await User.delete(user);
   }
 
@@ -74,7 +77,7 @@ class Routes {
   @Router.post("/posts")
   async createPost(session: WebSessionDoc, content: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
-    const created = await Post.create(user, content, options);
+    const created = await Post.create(user, content, [], options);
     return { msg: created.msg, post: await Responses.post(created.post) };
   }
 
@@ -139,82 +142,112 @@ class Routes {
     return await Friend.rejectRequest(fromId, user);
   }
 
-  @Router.post("/user/directMessage")
-  async sendMessage(to: UserDoc, from: UserDoc, message: string) {
-    throw new Error("not implemented yet");
+  @Router.post("/directMessege")
+  async sendMessage(session: WebSessionDoc, to: string, messege: string) {
+    const user = WebSession.getUser(session);
+    const toId = (await User.getUserByUsername(to))._id;
+    return await DirectMessage.sendMessage(user, messege, toId, null);
   }
-  @Router.put("directMessage/user/update")
-  async editMessage(user: UserDoc, message: string, new_message: string) {
-    throw new Error("not implemented yet");
+  @Router.put("/directMessege/:id")
+  async editMessage(session: WebSessionDoc, id: ObjectId, new_message: string) {
+    const user = WebSession.getUser(session);
+    return await DirectMessage.editMessage(user, id, new_message);
   }
-  @Router.delete("directMessage/user/:message")
-  async deleteMessage(user: UserDoc, message: string) {
-    throw new Error("not implemented yet");
+  @Router.delete("/directMessege/:id")
+  async deleteMessage(session: WebSessionDoc, id: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await DirectMessage.deleteMessage(user, id);
   }
-  @Router.post("/directMessage/user/:reaction")
-  async reactMessage(user: UserDoc, reaction: ReactionDoc, message: string) {
-    throw new Error("not implemented yet");
-  }
-  @Router.post("reaction/user/:media")
-  async makeReaction(media: PostDoc, reaction: ReactionDoc, user: UserDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.delete("reaction/user/:media")
-  async deleteReaction(media: PostDoc, user: UserDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.post("reaction/user/:notify")
-  async notifyReaction(from: UserDoc, to: UserDoc, reaction: ReactionDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.get("reaction/user/:media/all")
-  async searchReactions(user: UserDoc, media: PostDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.post("comment/user/:media")
-  async postComment(user: UserDoc, media: PostDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.delete("comment/user/:media")
-  async deleteComment(user: UserDoc, media: PostDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.post("comment/user/:notify")
-  async notifyUser(to: UserDoc, from: UserDoc) {
-    throw new Error("not implemented yet");
-  }
-  @Router.post("freindliness/user/:rate")
-  async rateUser(to: UserDoc, from: UserDoc, rate: string) {
-    throw new Error("not implemented yet");
-  }
-  @Router.put("friendliness/user/: overallscore")
-  async updateOverallScore(user: UserDoc, scores: UserDoc) {
+  @Router.post("/directMessage/:id")
+  async reactMessage(user: string, reaction: ReactionConcept, message: string) {
     throw new Error("not implemented yet");
   }
 
-  @Router.post("profile/user/_id")
-  async createProfile(user: UserDoc) {
+  @Router.post("/reaction")
+  async createReaction(session: WebSessionDoc, media: ObjectId, reaction: string) {
+    const user = WebSession.getUser(session);
+    await Reaction.createReaction(user, media, reaction);
+  }
+  @Router.delete("/reaction/delete/:id")
+  async deleteReaction(session: WebSessionDoc, id: ObjectId) {
+    const user = WebSession.getUser(session);
+    await Reaction.removeReaction(user, id);
+  }
+  @Router.post("/reaction/user/:notify")
+  async notifyReaction(from: UserDoc, to: UserDoc, reaction: ReactionDoc) {
     throw new Error("not implemented yet");
   }
-  @Router.put("profile/user/:edit")
-  async editProfile(user: UserDoc, profile: ProfileDoc) {
+  @Router.get("/reaction/:id")
+  async getReactions(media: ObjectId) {
+    await Reaction.getReactionsForPost(media);
+  }
+
+  @Router.post("/comment")
+  async createComment(session: WebSessionDoc, comment: string, media: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Comment.createComment(user, comment, media);
+  }
+
+  @Router.delete("/comment/:id")
+  async deleteComment(session: WebSessionDoc, id: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Comment.deleteComment(user, id);
+  }
+  @Router.post("/comment/:notify")
+  async notifyUser(to: UserDoc, from: UserDoc) {
     throw new Error("not implemented yet");
   }
-  @Router.post("spotdiscovery/user/:media")
-  async spotdiscoverypost(user: UserDoc, spot: PostDoc) {
-    throw new Error("not implemented yet");
+  @Router.post("/user/:rate")
+  async rateUser(username: string, rate: number) {
+    const user_to_rate = (await User.getUserByUsername(username))._id;
+    await User.rateUser(user_to_rate, rate);
   }
-  @Router.put("spotdiscovery/user/:media")
-  async updatesdpost(user: UserDoc, spot: PostDoc) {
-    throw new Error("not implemented yet");
+  @Router.get("/user/:rating")
+  async updateRating(session: WebSessionDoc) {
+    const user = WebSession.getUser(session);
+    await User.getRating(user);
   }
-  @Router.delete("spotdiscovery/user/:delmedia")
-  async deletespot(user: UserDoc, spot: PostDoc) {
-    throw new Error("not implemented yet");
+
+  @Router.post("/profile/")
+  async createProfile(session: WebSessionDoc, name: string, biography: string) {
+    const user = WebSession.getUser(session);
+    await Profile.createProfile(user, name, biography, "", []);
   }
-  @Router.get("spotdiscovery/user/: getReviews")
-  async getReviews(spot: string) {
-    throw new Error("not implemented yet");
+
+  @Router.put("/profile/:edit")
+  async editProfile(session: WebSessionDoc, profile: string, update: Partial<ProfileDoc>) {
+    const user = WebSession.getUser(session);
+    const profile_id = (await Profile.getProfile(profile))._id;
+    await Profile.updateProfile(profile_id, update);
+  }
+
+  @Router.post("/spotdiscovery")
+  async createSpot(session: WebSessionDoc, name: string, photos: Array<string>, reviews: Array<ReviewsDocs>) {
+    const user = WebSession.getUser(session);
+    await SpotDiscovery.createSpot(user, name, photos, reviews);
+  }
+  @Router.put("/spotdiscovery/:id")
+  async addImage(session: WebSessionDoc, location: string, update: Partial<LocationsDoc>) {
+    const user = WebSession.getUser(session);
+    const location_id = (await SpotDiscovery.getLocation(location))._id;
+    await SpotDiscovery.addImage(location_id, user, update);
+  }
+  @Router.put("/spotdiscovery/:id")
+  async updateReview(session: WebSessionDoc, id: ObjectId, update: Partial<ReviewsDocs>) {
+    const user = WebSession.getUser(session);
+    await SpotDiscovery.updateReview(user, id, update);
+  }
+
+  @Router.delete("/spotdiscovery/delete/:id")
+  async deleteReview(session: WebSessionDoc, id: ObjectId) {
+    const user = WebSession.getUser(session);
+    await SpotDiscovery.deleteReview(user, id);
+  }
+
+  @Router.get("/spotdiscovery/location/: getReviews")
+  async getReviews(location: string) {
+    const location_id = (await SpotDiscovery.getLocation(location))._id;
+    await SpotDiscovery.getReviews(location_id);
   }
 }
 

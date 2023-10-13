@@ -1,30 +1,27 @@
 import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
-import FriendConcept from "./friend";
 import PostConcept from "./post";
-import UserConcept from "./user";
 
 export interface MediaOptions {
   photos: HTMLImageElement;
 }
 
 export interface ProfileDoc extends BaseDoc {
-  user: UserConcept;
-  name: ObjectId;
-  biography: ObjectId;
-  profilePicture: ObjectId;
-  posts?: Set<PostConcept>;
-  reviews?: Set<{ location: string; review: string }>;
-  freinds: Set<FriendConcept>;
-  friendlinessScore: ObjectId;
+  user: ObjectId;
+  name: string;
+  biography: string;
+  profilePicture: string;
+  posts?: Array<PostConcept>;
+  reviews?: Array<{ location: string; review: string }>;
+  friends: Array<ObjectId>;
 }
 
 export default class ProfileConcept {
   private allProfiles = new DocCollection<ProfileDoc>("profiles");
 
-  async createProfile(name: ObjectId, biography: ObjectId, profilePicture: ObjectId, friendlinessScore: ObjectId) {
-    const profile_id = await this.allProfiles.createOne({ name, biography, profilePicture, friendlinessScore });
+  async createProfile(user: ObjectId, name: string, biography: string, profilePicture: string, friends: Array<ObjectId>) {
+    const profile_id = await this.allProfiles.createOne({ user, name, biography, profilePicture, friends });
     return "Profile created!";
   }
   async updateProfile(profile_id: ObjectId, update: Partial<ProfileDoc>) {
@@ -33,8 +30,22 @@ export default class ProfileConcept {
     return "Profile updated sucessfully";
   }
 
+  private sanitizeProfile(profile: ProfileDoc) {
+    // eslint-disable-next-line
+    const { friends, ...rest } = profile; // remove password
+    return rest;
+  }
+
+  async getProfile(name: string) {
+    const profile = await this.allProfiles.readOne({ name });
+    if (profile === null) {
+      throw new NotFoundError(`Location not found!`);
+    }
+    return this.sanitizeProfile(profile);
+  }
+
   private sanitizeUpdate(update: Partial<ProfileDoc>) {
-    const allowed = ["name", "biography", "profilePicture", "posts", "reviews", "friendlinessScore", "friends"];
+    const allowed = ["name", "biography", "profilePicture"];
     for (const key in update) {
       if (!allowed.includes(key)) {
         throw new NotAllowedError(`This update is not allowed. Cannot update '${key}' field`);

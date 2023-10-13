@@ -1,43 +1,53 @@
-import { Filter } from "mongodb";
+import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { DirectMessageDoc } from "./directmessage";
+import { NotAllowedError, NotFoundError } from "./errors";
 import { PostDoc } from "./post";
 import { UserDoc } from "./user";
 
 export interface ReactionDoc extends BaseDoc {
-  to: UserDoc;
-  from: UserDoc;
-  content: PostDoc | DirectMessageDoc;
+  author: ObjectId;
+  media: ObjectId;
   reaction: string;
 }
 
 export default class ReactionConcept {
   private allReactions = new DocCollection<ReactionDoc>("Reactions");
 
-  async createReaction(to: UserDoc, from: UserDoc, content: PostDoc | DirectMessageDoc, reaction: string) {
-    const messgae_id = await this.allReactions.createOne({ to, from, content, reaction });
+  async createReaction(author: ObjectId, media: ObjectId, reaction: string) {
+    const messgae_id = await this.allReactions.createOne({ author, media, reaction });
     return "reaction made successfully";
   }
-  async getReactionsForPost(query: Filter<ReactionDoc>) {
-    const reactions = await this.allReactions.readMany(query, {
-      sort: { dateUpdates: -1 },
-    });
+  async getReactionsForPost(media: ObjectId) {
+    const reactions = await this.allReactions.readMany({ media });
     return reactions;
   }
-  async getReacionforMessage(to: UserDoc, from: UserDoc, message: DirectMessageDoc) {
-    const query = { to: to, from: from, content: message };
-    const reactionObj = await this.allReactions.readOne(query);
-    const reaction = reactionObj?.reaction;
-    if (reaction !== undefined) {
-      return reaction;
-    }
-  }
-  async removeReaction(user: UserDoc, media: PostDoc | DirectMessageDoc) {
-    const query = { from: user, content: media };
-    await this.allReactions.deleteOne(query);
+
+  async removeReaction(user: ObjectId, reaction_id: ObjectId) {
+    this.isAuthor(user, reaction_id);
+    await this.allReactions.deleteOne({ reaction_id });
     return "Reaction deleted successfully";
   }
+
+  async isAuthor(user: ObjectId, reaction_id: ObjectId) {
+    const reaction = await this.allReactions.readOne({ _id: reaction_id });
+    if (!reaction) {
+      throw new NotFoundError(`Message ${reaction_id} does not exist!`);
+    }
+    if (reaction.author.toString() !== user.toString()) {
+      throw new ReactionAuthorNotMatchError(user, reaction_id);
+    }
+  }
+
   async notifyUser(user: UserDoc, content: PostDoc | DirectMessageDoc) {
     throw new Error("not implemented yet");
+  }
+}
+export class ReactionAuthorNotMatchError extends NotAllowedError {
+  constructor(
+    public readonly author: ObjectId,
+    public readonly _id: ObjectId,
+  ) {
+    super("{0} is not the author of post {1}!", author, _id);
   }
 }
