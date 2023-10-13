@@ -28,6 +28,13 @@ export default class WebSessionConcept {
     this.isLoggedIn(session);
     return new ObjectId(session.user);
   }
+  getUsername(session: WebSessionDoc) {
+    this.isLoggedIn(session);
+    const username = session.user;
+    if (username !== undefined) {
+      return session.user;
+    }
+  }
 
   isLoggedIn(session: WebSessionDoc) {
     if (session.user === undefined) {

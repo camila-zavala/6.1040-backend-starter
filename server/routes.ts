@@ -199,17 +199,17 @@ class Routes {
   }
   @Router.get("/comments")
   async getComments(id: ObjectId) {
-    return Comment.getComments(id);
+    return await Comment.getComments(id);
   }
   @Router.post("/user/:rate")
   async rateUser(username: string, rate: number) {
-    const user = (await User.getUserByUsername(username))._id;
-    return await User.rateUser(user, rate);
+    const id = (await User.getUserByUsername(username))._id;
+    return await User.rateUser(id, rate);
   }
   @Router.get("/user/:rating")
   async updateRating(session: WebSessionDoc) {
-    const user = WebSession.getUser(session);
-    return await User.getRating(user);
+    const id = WebSession.getUser(session);
+    return await User.getRating(id);
   }
 
   @Router.post("/profile")

@@ -98,18 +98,20 @@ export default class UserConcept {
       throw new NotAllowedError(`User with username ${username} already exists!`);
     }
   }
-  async rateUser(user: ObjectId, rate: number) {
-    const maybeUser = await this.users.readOne({ user });
+  async rateUser(_id: ObjectId, rate: number) {
+    const maybeUser = await this.users.readOne({ _id });
+    console.log(maybeUser, _id);
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
     }
-    const newTotal = maybeUser.numRatings + 1;
-    const newRating = maybeUser.numRatings * maybeUser.rating + rate; //newTotal
+    let newTotal = maybeUser.numRatings + 1;
+    let newRating = maybeUser.numRatings * maybeUser.rating + rate; //newTotal
     maybeUser.numRatings = newTotal;
     maybeUser.rating = newRating;
   }
-  async getRating(user: ObjectId) {
-    const maybeUser = await this.users.readOne({ user });
+  async getRating(_id: ObjectId) {
+    const maybeUser = await this.users.readOne({ _id });
+    console.log(maybeUser, _id);
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
     }
